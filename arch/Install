@@ -1,0 +1,86 @@
+#!/bin/bash
+# -*- shell-script -*-
+
+# Archのシステム環境をインストールします。
+
+#set -x    # デバッグ時には -x オプションをつける
+#set -e    # source して使うときは、-e をつけない
+
+# ディスクパラメータ
+# パーティションは `parted`
+_is_efi="true"                  # EFIなら "true"、BIOSなら "false"
+_device="/dev/sda"         # ディスクのデバイス名
+# BIOS/MBRは、part1: swap, part2: root です。
+_mbr_swap_start="0G"
+_mbr_swap_end="10G"
+_mbr_root_start="11G"
+_mbr_root_end="100%"
+# EFI/GPTは、part1: efi, part2: swap, part3: root です。
+_gpt_efi_start="0G"
+_gpt_efi_end="1G"
+_gpt_swap_start="1G"
+_gpt_swap_end=""
+
+
+
+
+
+
+alias p="parted --script --align optimal /dev/sda"
+p mklabel msdos
+p mkpart primary fat32 0G 1G    # for /boot
+p mkpart primary linux-swap 1G 5G    # for swap
+p mkpart primary ext4 5G 100%  # for /
+p set 1 boot
+mkfs.ext4 /dev/sda1
+mkswap /dev/sda2
+mkfs.ext4 /dev/sda3
+
+alias p="parted --script --align optimal /dev/sda"
+p mklabel gpt
+p mkpart ESP fat32 0G 1G    # for ESP, /boot
+p mkpart swap linux-swap 1G 5G    # for swap
+p mkpart / ext4 5G 100%  # for /
+p set 1 esp
+mkfs.vfat -F32 /dev/sda1
+mkswap /dev/sda2
+mkfs.ext4 /dev/sda3
+mount /dev/sda3 /mnt
+swapon /dev/sda2
+mkdir /mnt/boot
+mount /dev/sda1 /mnt/boot
+
+
+
+
+SRC_DIR=$(pwd)
+
+if [ "x$_FORCE" = "x" ]; then _FORCE="false"; fi
+if [ "x$_VERBOSE" = "x" ]; then _VERBOSE="true"; fi
+
+_PROGNAME="SystemInstall"
+_C_GRE=$(tput setaf 2)               # green
+_C_YEL=$(tput setaf 3)               # yellow
+_C_RED=$(tput setaf 1)               # red
+_C_GRB=$(tput setaf 2; tput bold)    # bold green
+_C_YEB=$(tput setaf 3; tput bold)    # bold yellow
+_C_REB=$(tput setaf 1; tput bold)    # bold red
+_C_RES=$(tput sgr0)                  # reset
+
+if [ "$_VERBOSE" = "true" ]; then
+    function _info(){   echo "$_C_GRE[$_PROGNAME] $@$_C_RES"; }
+    function _warn(){   echo "$_C_YEL[$_PROGNAME] $@$_C_RES"; }
+    function _error(){  echo "$_C_RED[$_PROGNAME] $@$_C_RES"; }
+    function _prompt(){ read -p "$_C_GRB$1$_C_RES" $2; }
+else
+    function _info(){   :; }
+    function _warn(){   :; }
+    function _error(){  :; }
+    function _prompt(){ :; }
+fi
+
+setup_bios_disk() {
+    alias p="parted --script --align optimal $_disk_device
+
+
+}
